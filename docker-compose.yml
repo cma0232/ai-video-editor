@@ -1,0 +1,56 @@
+version: '3.8'
+
+services:
+  chuangcut-video-workflow:
+    build: .
+    container_name: chuangcut-video-workflow
+    ports:
+      - "8899:3000"
+    volumes:
+      # 数据持久化
+      - chuangcut-video-workflow-data:/data
+      - chuangcut-video-workflow-temp:/temp
+      - chuangcut-video-workflow-output:/output
+      - chuangcut-video-workflow-logs:/logs
+
+      # 可选：映射输出目录到宿主机
+      # - ./output:/output
+
+    environment:
+      # ========== 授权配置（新增） ==========
+      - LICENSE_KEY=${LICENSE_KEY}                          # 客户提供的授权码
+      - LICENSE_ENCRYPTION_KEY=${LICENSE_ENCRYPTION_KEY}    # 解密密钥（镜像预置）
+
+      # ========== 应用配置 ==========
+      - NODE_ENV=production
+
+      # 数据库路径
+      - DATABASE_URL=file:/data/db.sqlite
+
+      # 加密密钥（API密钥加密）
+      - ENCRYPTION_KEY=${ENCRYPTION_KEY}
+
+      # 日志级别
+      - LOG_LEVEL=info
+
+      # 目录配置
+      - TEMP_DIR=/temp
+      - OUTPUT_DIR=/output
+
+    restart: unless-stopped
+
+    # 资源限制（根据实际情况调整）
+    deploy:
+      resources:
+        limits:
+          cpus: '4'
+          memory: 8G
+        reservations:
+          cpus: '2'
+          memory: 4G
+
+volumes:
+  chuangcut-video-workflow-data:
+  chuangcut-video-workflow-temp:
+  chuangcut-video-workflow-output:
+  chuangcut-video-workflow-logs:

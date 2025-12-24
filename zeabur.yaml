@@ -1,0 +1,229 @@
+apiVersion: zeabur.com/v1
+kind: Template
+metadata:
+  name: ChuangCut Video Workflow
+spec:
+  description: 基于 Google Gemini AI 的全自动视频剪辑工具 - 智能分析、自动生成分镜脚本、AI 配音合成、本地音画同步处理
+  icon: https://raw.githubusercontent.com/xiangyugongzuoliu/chuangcut-video-workflow-zeabur/main/assets/icon.png
+  coverImage: https://raw.githubusercontent.com/xiangyugongzuoliu/chuangcut-video-workflow-zeabur/main/assets/cover.png
+  tags:
+    - AI
+    - Video
+    - Automation
+    - Tool
+  readme: |
+    # ChuangCut Video Workflow
+
+    这是一个基于 Google Gemini AI 的全自动视频剪辑工具，核心功能包括：
+
+    - 🎬 **视频智能分析**：使用 Google Gemini 分析视频内容并生成分镜脚本
+    - 🎙️ **AI 配音合成**：通过 Fish Audio 生成自然流畅的 AI 配音
+    - ⚡ **本地音画同步**：FFmpeg 8.0.1 本地处理，零 API 费用，处理速度提升 3x
+    - 🔄 **步骤级追踪**：每个步骤完成后记录状态，便于问题诊断
+    - 🎨 **多种风格**：支持 15+ 种解说风格预设
+
+    ## 部署前准备
+
+    ⚠️ **重要**：部署前请联系**翔宇工作流**获取软件授权码
+
+    授权码格式：`XXXX-XXXXXXXX-XXXX`（18-24 字符）
+
+    ## 部署后配置
+
+    1. **访问设置页面**：部署完成后访问 `/settings` 配置 API 密钥
+
+    2. **必需的 API 密钥**：
+       - **Gemini API Key**：从 [Google AI Studio](https://aistudio.google.com) 获取（个人用户）
+       - **Fish Audio API Key**：语音合成服务密钥
+
+    3. **可选配置**：
+       - Gemini Vertex AI（企业级，支持大文件）
+       - Google Cloud Storage（最终成片存储）
+
+    ## 使用流程
+
+    1. 在设置页面配置所有必需的 API 密钥
+    2. 创建新任务，输入视频 URL 并选择解说风格
+    3. 等待自动处理（支持断点续传）
+    4. 下载最终成片
+
+    ## 技术栈
+
+    - Next.js 16.0.6 + React 19.2 + TypeScript
+    - SQLite (better-sqlite3) 数据库
+    - Tailwind CSS v4.1 + shadcn/ui
+    - Docker 部署
+
+    ## 数据持久化
+
+    所有数据（数据库、临时文件、输出文件、日志）都存储在 `/data` 卷中，Zeabur 会自动提供持久化存储。
+
+    ## 注意事项
+
+    - 首次部署后必须先配置 API 密钥才能使用
+    - 视频处理需要消耗外部服务配额（Gemini、Fish Audio）
+    - 视频拆条、调速、拼接由本地 FFmpeg 处理，零 API 费用
+    - 建议先使用小文件测试
+
+    ## 更多信息
+
+    - GitHub：https://github.com/xiangyugongzuoliu/chuangcut-video-workflow
+    - 文档：https://github.com/xiangyugongzuoliu/chuangcut-video-workflow/blob/main/README.md
+
+  variables:
+    - key: LICENSE_KEY
+      type: STRING
+      name: 🔑 软件授权码
+      description: 翔宇工作流提供的授权码（必填）。格式：XXXX-XXXXXXXX-XXXX（18-24 字符）
+
+  services:
+    - name: chuangcut-video-workflow
+      icon: https://raw.githubusercontent.com/xiangyugongzuoliu/chuangcut-video-workflow-zeabur/main/assets/icon.png
+      template: PREBUILT
+      spec:
+        source:
+          image: xiangyugongzuoliu/chuangcut-video-workflow:latest
+        ports:
+          - id: web
+            type: HTTP
+            port: 3000
+        volumes:
+          - id: data
+            dir: /data
+        env:
+          LICENSE_KEY:
+            default: ${LICENSE_KEY}
+            expose: true
+          DATABASE_URL:
+            default: file:/data/db.sqlite
+          NEXT_PUBLIC_BASE_URL:
+            default: ${ZEABUR_WEB_URL}
+          AUTH_ENABLED:
+            default: "true"
+          SESSION_MAX_AGE_DAYS:
+            default: "7"
+          FFMPEG_TEMP_DIR:
+            default: /data/temp/ffmpeg
+          TEMP_DIR:
+            default: /data/temp
+          OUTPUT_DIR:
+            default: /data/output
+          LOGS_DIR:
+            default: /data/logs
+      instructions: |
+        ## 部署成功！
+
+        您的 ChuangCut Video Workflow 已成功部署。
+
+        ### 授权验证
+
+        ✅ 您已使用授权码完成部署，系统已自动验证授权有效性。
+
+        ### 下一步操作
+
+        1. **访问应用**：点击上方的域名链接访问应用
+
+        2. **首次登录**：
+           - 默认用户名：`admin`（首次访问时创建）
+           - 需要设置密码
+
+        3. **配置 API 密钥**：
+           - 访问 `/settings` 页面
+           - 配置以下必需的 API 密钥：
+             * Gemini API Key（从 https://aistudio.google.com 获取）
+             * Fish Audio API Key（语音合成服务）
+
+        4. **创建第一个任务**：
+           - 访问 `/jobs` 页面
+           - 点击"创建新任务"
+           - 输入视频 URL 并选择风格
+
+        ### 重要提示
+
+        - 🔑 授权码已配置，请妥善保管
+        - ⚠️ 必须先配置 API 密钥才能使用视频处理功能
+        - 🔐 加密密钥和 Session 密钥已自动生成，安全存储
+        - 💾 所有数据都保存在 `/data` 卷中，不会丢失
+
+        ### 故障排查
+
+        如遇问题，请查看：
+        - GitHub Issues: https://github.com/xiangyugongzuoliu/chuangcut-video-workflow/issues
+        - 文档：https://github.com/xiangyugongzuoliu/chuangcut-video-workflow/blob/main/CLAUDE.md
+
+localization:
+  zh-CN:
+    description: 基于 Google Gemini AI 的全自动视频剪辑工具 - 智能分析、自动生成分镜脚本、AI 配音合成、本地音画同步处理
+    readme: |
+      # ChuangCut Video Workflow
+
+      这是一个基于 Google Gemini AI 的全自动视频剪辑工具，核心功能包括：
+
+      - 🎬 **视频智能分析**：使用 Google Gemini 分析视频内容并生成分镜脚本
+      - 🎙️ **AI 配音合成**：通过 Fish Audio 生成自然流畅的 AI 配音
+      - ⚡ **本地音画同步**：FFmpeg 8.0.1 本地处理，零 API 费用，处理速度提升 3x
+      - 🔄 **步骤级追踪**：每个步骤完成后记录状态，便于问题诊断
+      - 🎨 **多种风格**：支持 15+ 种解说风格预设
+
+      ## 部署前准备
+
+      ⚠️ **重要**：部署前请联系**翔宇工作流**获取软件授权码
+
+      ## 部署后配置
+
+      1. **访问设置页面**：部署完成后访问 `/settings` 配置 API 密钥
+
+      2. **必需的 API 密钥**：
+         - **Gemini API Key**：从 [Google AI Studio](https://aistudio.google.com) 获取（个人用户）
+         - **Fish Audio API Key**：语音合成服务密钥
+
+      3. **可选配置**：
+         - Gemini Vertex AI（企业级，支持大文件）
+         - Google Cloud Storage（最终成片存储）
+
+      ## 使用流程
+
+      1. 在设置页面配置所有必需的 API 密钥
+      2. 创建新任务，输入视频 URL 并选择解说风格
+      3. 等待自动处理（支持步骤级追踪）
+      4. 下载最终成片
+
+      更多信息请访问 [GitHub 仓库](https://github.com/xiangyugongzuoliu/chuangcut-video-workflow)。
+
+  en-US:
+    description: AI-powered automatic video editing tool - Smart analysis, auto-generated storyboards, AI voiceover, local audio-video sync
+    readme: |
+      # ChuangCut Video Workflow
+
+      An AI-powered automatic video editing tool based on Google Gemini AI, featuring:
+
+      - 🎬 **Smart Video Analysis**: Analyze video content and generate storyboards using Google Gemini
+      - 🎙️ **AI Voiceover**: Generate natural AI voiceovers via Fish Audio
+      - ⚡ **Local Audio-Video Sync**: FFmpeg 8.0.1 local processing, zero API cost, 3x faster
+      - 🔄 **Step-Level Tracking**: Record status after each step for easy troubleshooting
+      - 🎨 **Multiple Styles**: Support 15+ narration style presets
+
+      ## Pre-Deployment
+
+      ⚠️ **Important**: Contact **Xiangyu Workflow** for a software license key before deployment
+
+      ## Post-Deployment Setup
+
+      1. **Access Settings**: Visit `/settings` to configure API keys after deployment
+
+      2. **Required API Keys**:
+         - **Gemini API Key**: Get from [Google AI Studio](https://aistudio.google.com) (for personal users)
+         - **Fish Audio API Key**: Voice synthesis service key
+
+      3. **Optional Configuration**:
+         - Gemini Vertex AI (enterprise-grade, supports large files)
+         - Google Cloud Storage (final video storage)
+
+      ## Usage Workflow
+
+      1. Configure all required API keys in settings page
+      2. Create new task, input video URL and select narration style
+      3. Wait for automatic processing (supports step-level tracking)
+      4. Download final video
+
+      For more information, visit [GitHub Repository](https://github.com/xiangyugongzuoliu/chuangcut-video-workflow).

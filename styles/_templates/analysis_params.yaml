@@ -1,0 +1,113 @@
+# 系统级分析提示词参数模板（单视频/多视频统一）
+# v3.0.0 - 硬性约束强化
+#
+# 说明：
+# - 本文件由系统自动管理，包含输入信息和输出规范
+# - 用户风格文件（styles/style-*.yaml）中的 analysis_creative_layer 会与本模板组合
+# - 支持的占位符请参考：_templates/template-variables.md
+#
+# 占位符说明：
+# - {{video_descriptions}} - 视频元数据描述（格式化字符串）
+# - {{storyboard_count}} - 期望的分镜数量
+# - {{script_outline_section}} - 文案大纲段落（可选）
+# - {{original_audio_scene_count_section}} - 原声使用说明段落（可选）
+# - {{channel_name}} - 频道名称（来自风格配置）
+# - {{narration_language}} - 旁白语言（来自任务配置）
+# - {{min_duration}} - 分镜时长范围最小值（秒，来自风格配置）
+# - {{max_duration}} - 分镜时长范围最大值（秒，来自风格配置）
+
+template: |
+  # 执行任务
+
+  基于上述创意守则，现在对以下素材进行分析和脚本生成。
+
+  ---
+
+  ## 输入信息
+
+  **原视频 (Source Videos)**: 待分析和剪辑的视频文件及视频详情。
+
+  {{video_descriptions}}
+
+  **期望的分镜数量（storyboard_count）**: {{storyboard_count}}
+
+  {{script_outline_section}}
+
+  {{original_audio_scene_count_section}}
+
+  **频道名称（channel_name）**: {{channel_name}}
+
+  **指定的旁白语言（narration_language）**: {{narration_language}}
+
+  **单个分镜时长范围（硬性）**: {{min_duration}} ~ {{max_duration}} 秒
+
+  ---
+
+  ## 输出规范
+
+  ### 硬性约束（违反=输出无效）
+
+  | 约束 | 要求 |
+  |------|------|
+  | JSON 结构 | 必须是合法的 JSON 格式 |
+  | 分镜数量 | storyboards 数组长度 = 期望的分镜数量 |
+  | 单镜时长 | 每个分镜的 duration_seconds 必须在 {{min_duration}} ~ {{max_duration}} 秒范围内 |
+  | 时间戳格式 | HH:MM:SS.ms（不足1小时也用 00:MM:SS.ms） |
+  | 时间戳范围 | 必须在 source_video 所指原视频的实际时长范围内 |
+  | 时间段互斥 | 同一视频不同分镜，时间段禁止重叠 |
+  | 时长计算 | duration_seconds = source_end_time - source_start_time |
+
+  ### 来源规范
+
+  - **单视频模式**：所有分镜的 source_video = "video-1"
+  - **多视频模式**：均衡使用所有输入视频，source_video 必须是上述原视频列表中的有效 ID
+
+  ### ⚠️ 常见错误
+
+  - 时间戳超出视频实际时长
+  - 同一视频的分镜时间段重叠
+  - duration_seconds 计算错误
+  - 分镜数量与期望不一致
+
+  ---
+
+  ## 字段说明
+
+  | 字段 | 类型 | 示例 | 说明 |
+  |------|------|------|------|
+  | scene | string | "1" | 分镜编号 |
+  | source_video | string | "video-1" | 来源视频ID |
+  | source_start_time | string | "00:00:10.000" | 开始时间 |
+  | source_end_time | string | "00:00:25.500" | 结束时间 |
+  | duration_seconds | number | 15.5 | 分镜时长（秒） |
+  | narration_script | string | "旁白文案..." | 旁白文案 |
+  | use_original_audio | boolean | false | 是否使用原声。注意：即使为 true，旁白字段仍需输出 |
+
+  ---
+
+  ## 输出示例
+
+  ```json
+  {
+    "storyboards": [
+      {
+        "scene": "1",
+        "source_video": "video-1",
+        "source_start_time": "00:00:10.000",
+        "source_end_time": "00:00:25.500",
+        "duration_seconds": 15.5,
+        "narration_script": "这是旁白文案...",
+        "use_original_audio": false
+      },
+      {
+        "scene": "2",
+        "source_video": "video-2",
+        "source_start_time": "00:01:05.000",
+        "source_end_time": "00:01:17.000",
+        "duration_seconds": 12.0,
+        "narration_script": "另一个分镜的旁白...",
+        "use_original_audio": true
+      }
+    ]
+  }
+  ```
