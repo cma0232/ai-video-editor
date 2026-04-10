@@ -1,4 +1,4 @@
-# 创剪视频工作流 (ChuangCut Video Workflow)
+# Video Auto Clipping Tool
 
 **版本**：16.0.0
 
