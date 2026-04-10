@@ -15,8 +15,6 @@
 
 ## 快速开始
 
-> ⚠️ **重要提示**：本项目需要有效的 LICENSE_KEY 授权码才能启动。联系翔宇工作流获取授权。
-
 ### 开发环境
 
 ```bash
@@ -216,6 +214,3 @@ chuangcut-video-workflow/
 - **docs/agent/**: 详细技术文档（架构、数据库、工作流、API 等）
 - **styles/_templates/template-variables.md**: 风格模板占位符参考手册
 
-## License
-
-Private - 本项目为私有项目，需要有效的 LICENSE_KEY 授权码才能使用。联系翔宇工作流获取授权。
